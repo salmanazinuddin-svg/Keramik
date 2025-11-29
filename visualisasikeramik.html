@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualisasi Keramik 3xN</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f5;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+        h1{
+            margin-top: 40px;
+        }
+        input{
+            padding: 6px 10px;
+            width: 120px;
+            font-size: 15px;
+        }
+        button{
+            padding: 6px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        button:hover{
+            background: #0067d4;
+        }
+        #result{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .board{
+            border: 2px solid #333;
+            padding: 4px;
+        }
+        .grid{
+            display: grid;
+            grid-template-rows: repeat(3, 30px);
+        }
+        .cell{
+            border: 1px solid rgb(55,55,55);
+        }
+        .tileA{ background: #4CAF50;}
+        .tileB{ background: #FF9800;}
+    </style>
+</head>
+<body>
+
+    <h1>Visualisasi Keramik 3×N</h1>
+
+    <p>Masukkan lebar (N):</p>
+    <input type="number" id="inputN" min="1" value="3">
+    <button onclick="calculate()">Lihat Semua Kemungkinan</button>
+
+    <p id="info"></p>
+    <div id="result"></div>
+
+<script>
+/*
+Tile:
+A = 1×3 (vertikal)
+B = 3×1 (horizontal)
+Representasi board: matrix boolean kosong/isi
+*/
+
+function emptyBoard(n){
+    return Array.from({length:3},()=>Array(n).fill(0));
+}
+
+function cloneBoard(b){
+    return b.map(r=>r.slice());
+}
+
+function placeA(board, c){
+    if(c+1>=board[0].length) return false;
+    for(let r=0;r<3;r++){
+        if(board[r][c]!==0 || board[r][c+1]!==0) return false;
+    }
+    for(let r=0;r<3;r++){
+        board[r][c] = "A";
+        board[r][c+1] = "A";
+    }
+    return true;
+}
+
+function removeA(board,c){
+    for(let r=0;r<3;r++){
+        board[r][c]=0;
+        board[r][c+1]=0;
+    }
+}
+
+function placeB(board,c){
+    if(board[0][c]!==0 || board[1][c]!==0 || board[2][c]!==0) return false;
+    board[0][c]="B";
+    board[1][c]="B";
+    board[2][c]="B";
+    return true;
+}
+
+function removeB(board,c){
+    board[0][c]=0;
+    board[1][c]=0;
+    board[2][c]=0;
+}
+
+function solve(board,c,n,solutions){
+    if(c>=n){
+        solutions.push(cloneBoard(board));
+        return;
+    }
+    if(board[0][c]!==0){
+        solve(board,c+1,n,solutions);
+        return;
+    }
+    if(placeB(board,c)){
+        solve(board,c+1,n,solutions);
+        removeB(board,c);
+    }
+    if(placeA(board,c)){
+        solve(board,c+2,n,solutions);
+        removeA(board,c);
+    }
+}
+
+function render(boardArr){
+    const div=document.createElement("div");
+    div.className="board";
+    const grid=document.createElement("div");
+    grid.className="grid";
+    grid.style.gridTemplateColumns=`repeat(${boardArr[0].length},30px)`
+    for(let r=0;r<3;r++){
+        for(let c=0;c<boardArr[0].length;c++){
+            let cell=document.createElement("div");
+            cell.className="cell";
+            if(boardArr[r][c]==="A") cell.classList.add("tileA");
+            if(boardArr[r][c]==="B") cell.classList.add("tileB");
+            grid.appendChild(cell);
+        }
+    }
+    div.appendChild(grid);
+    return div;
+}
+
+function calculate(){
+    const N=parseInt(document.getElementById("inputN").value);
+    const result=document.getElementById("result");
+    const info=document.getElementById("info");
+    result.innerHTML="";
+
+    if(N<1) return;
+
+    const board=emptyBoard(N);
+    let solutions=[];
+    solve(board,0,N,solutions);
+
+    info.innerHTML=`Ditemukan <b>${solutions.length}</b> cara memasang keramik pada ukuran 3×${N}.`;
+
+    solutions.forEach(s => result.appendChild(render(s)));
+}
+</script>
+
+</body>
+</html>
